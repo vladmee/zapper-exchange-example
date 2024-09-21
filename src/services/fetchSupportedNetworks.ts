@@ -9,6 +9,9 @@ const Authorization = `Basic ${Buffer.from(`${apiKey}:`, 'binary').toString(
   'base64'
 )}`;
 
+// fetching the networks supported by Zapper
+// as this is the entry point of the application (have to select a network to proceed)
+// this data is prefetched (see QueryHydration)
 export async function fetchSupportedNetworks({
   queryKey: [{ endpoint }],
 }: QueryFunctionContext<

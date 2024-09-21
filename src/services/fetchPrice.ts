@@ -11,6 +11,9 @@ const Authorization = `Basic ${Buffer.from(`${apiKey}:`, 'binary').toString(
   'base64'
 )}`;
 
+// fetches the price for the selected token
+// lots of validations to not call the API if the data in invalid
+// if the price is not available, all other hooks like useQuote, useAllowance etc won't be called as well
 export async function fetchPrice({
   queryKey: [{ endpoint, request }],
 }: QueryFunctionContext<
@@ -32,6 +35,11 @@ export async function fetchPrice({
 
   const { buyTokenAddress, sellAmount, slippagePercentage, feeAsFraction } =
     request;
+
+  if (typeof sellAmount !== 'number' || sellAmount <= 0) {
+    throw new Error('sellAmount must be a number greater than 0.');
+  }
+
   const { address: sellTokenAddress, decimals: decimalsString } = token;
   const decimals = Number(decimalsString);
 

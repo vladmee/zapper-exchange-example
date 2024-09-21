@@ -1,15 +1,14 @@
 import { formatUnits } from 'viem';
 
+// formats a token
 const useToken = ({
-  network,
   decimals,
   amount,
 }: {
-  network?: string;
   decimals?: number;
   amount?: string;
 }) => {
-  if (!network || !decimals || !amount)
+  if (!decimals || !amount)
     return {
       buyAmount: undefined,
     };

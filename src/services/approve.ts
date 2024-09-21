@@ -3,11 +3,13 @@ import { PriceResponse } from './types';
 import { connectWalletClient } from '@/client';
 import { Address, erc20Abi, WriteContractReturnType } from 'viem';
 
+// it triggers the approval transaction for the token to sell
+// getting the price response assures approval of the right contracts
 export async function approve(
   price?: PriceResponse
 ): Promise<WriteContractReturnType> {
   if (!price) {
-    throw new Error("Quote doesn't exist.");
+    throw new Error("Price doesn't exist.");
   }
 
   const network = useStore.getState().network;
@@ -28,6 +30,7 @@ export async function approve(
       address: sellTokenAddress as Address,
       functionName: 'approve',
       args,
+      chain: walletClient.chain,
       account,
     });
   } catch (error) {

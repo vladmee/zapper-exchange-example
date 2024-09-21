@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { PriceResponse, QuoteResponse } from '@/services/types';
+import { PriceResponse } from '@/services/types';
 import { allowance } from '@/services/allowance';
 
 const useAllowance = (price?: PriceResponse) => {

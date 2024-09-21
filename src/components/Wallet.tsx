@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { connectWalletClient } from "@/client";
 import { useStore } from "@/store";
 
+// This is where the wallet address is keyed in. Or you can connect your own wallet.
 const Wallet = () => {
-  const { wallet, network, setWallet } = useStore();
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const { wallet, network, setWallet, isConnectedWallet, setIsConnectedWallet } = useStore(); // the wallet is handled directly in the zustand store
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWallet(e.target.value);
@@ -19,10 +18,10 @@ const Wallet = () => {
     }
 
     try {
-      const walletClient = await connectWalletClient(network);
+      const walletClient = await connectWalletClient(network); // viem client; injected wallet only
       const [connectedAddress] = await walletClient.requestAddresses();
       setWallet(connectedAddress);
-      setIsWalletConnected(true);
+      setIsConnectedWallet(true);
     } catch (error) {
       console.error("Failed to connect wallet:", error);
     }
@@ -30,7 +29,7 @@ const Wallet = () => {
 
   const handleDisconnectWallet = () => {
     setWallet("");
-    setIsWalletConnected(false);
+    setIsConnectedWallet(false);
   };
 
   return (
@@ -39,11 +38,12 @@ const Wallet = () => {
         type="text"
         value={wallet}
         onChange={handleChange}
-        placeholder="Enter address"
+        placeholder="Enter an address manually"
         className="flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        disabled={isWalletConnected}
+        disabled={isConnectedWallet}
       />
-      {!isWalletConnected ? (
+      <p className="text-gray-500">or</p>
+      {!isConnectedWallet ? (
         <button
           onClick={handleConnectWallet}
           className="p-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"

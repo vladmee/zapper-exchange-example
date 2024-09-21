@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// query store to use on the client
 export default function QueryStore({
   children,
 }: {

@@ -7,6 +7,7 @@ const useBalances = (address?: string) => {
     queryKey: queryKeys.balances(address),
     queryFn: fetchBalances,
     enabled: !!address,
+    retry: 1,
   });
 };
 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import apiBaseUrl from './apiBaseUrl';
 import { QuoteRequest, QuoteResponse } from './types';
+import { useStore } from '@/store';
 
 const endpoint = '/v2/exchange/quote';
 
@@ -9,6 +10,7 @@ const Authorization = `Basic ${Buffer.from(`${apiKey}:`, 'binary').toString(
   'base64'
 )}`;
 
+// fetches a quote for the exchange transaction
 export async function fetchQuote(
   request?: QuoteRequest
 ): Promise<QuoteResponse> {
@@ -16,6 +18,7 @@ export async function fetchQuote(
     throw new Error('Something went wrong.');
   }
 
+  // most of these values are passed directly from price
   const {
     sellTokenAddress,
     buyTokenAddress,
@@ -56,6 +59,9 @@ export async function fetchQuote(
     });
 
     const data: QuoteResponse = response.data;
+
+    useStore.getState().setQuote(data);
+
     return data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

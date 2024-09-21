@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { supportedNetworksQuery } from "./hooks/use-supported-networks";
 
+// query store for prefetching
 export default async function QueryHydration({
   children,
 }: {

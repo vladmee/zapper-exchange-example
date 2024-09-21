@@ -17,15 +17,19 @@ export interface Source {
   hops: unknown[];
 }
 
-const buyTokenAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+// The buy token address is hardcoded to USDC for this example
+const buyTokenAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' // USDC address
+const decimals = 6;
 
+// Main exchange component. This is where the magic happens 🪄✨
 const Exchange = () => {
-  const { wallet, token, network, setSelectedToken } = useStore();
+  const { wallet, token, network, setSelectedToken } = useStore(); // zustand store
 
   const [amount, setAmount] = useState<number>(0);
   const [error, setError] = useState<string>("");
   const debouncedAmount = useDebounce(amount, 300);
 
+  // usePrice calls /v2/exchange/price
   const { data: price, error: priceError } = usePrice({
     sellTokenAddress: token?.address,
     buyTokenAddress,
@@ -33,71 +37,101 @@ const Exchange = () => {
     slippagePercentage: 0.02,
     feeAsFraction: 0
   })
-  const { buyAmount } = useToken({
-    network,
-    decimals: 6,
-    amount: price?.buyAmount
-  });
-  const { data: quote, mutateAsync: getQuote, reset: resetQuote } = useQuote({
+
+  // useQuote calls /v2/exchange/quote
+  const { data: quote, mutate: getQuote, isPending: isPendingQuote, reset: resetQuote } = useQuote({
     sellTokenAddress: price?.sellTokenAddress,
     buyTokenAddress: price?.buyTokenAddress,
     sellAmount: price?.sellAmount,
     ownerAddress: wallet,
-    slippagePercentage: 0.02,
+    slippagePercentage: 0.2,
     network,
     feeAsFraction: 0
   });
-  const { error: exchangeError, mutate: exchange, isPending: isPendingExchange } = useExchange(quote);
+
+  // useExchange triggers the exchange transaction based on a valid quote
+  const { mutate: exchange, isPending: isPendingExchange, error: exchangeError } = useExchange(quote);
+
+  // useToken just formats the amount to display
+  const { buyAmount } = useToken({
+    decimals,
+    amount: price?.buyAmount
+  });
 
   useEffect(() => {
-    resetQuote();
-  }, [amount]);
+    resetQuote(); // reset the quote when the amount changes
+  }, [amount, resetQuote]);
 
   if (!token) return;
 
+  // everything in one component... gg!
   return (
-    <div className="pt-8">
+    <div>
       <button
-        className="mb-4 px-4 py-2 bg-gray-200 rounded"
+        className="mb-4 flex items-center px-4 py-2 bg-gray-200 rounded"
         onClick={() => setSelectedToken(undefined)}
       >
-        Back
+        <svg
+          className="w-4 h-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M15 19l-7-7 7-7"
+          ></path>
+        </svg>
+        <span className="italic">Back</span>
       </button>
-      <div className="mb-4">
-        <span className="font-bold">{token.symbol}</span>: {token.balance}
-      </div>
-      <div className="mb-4">
-        <input
-          type="number"
-          className="w-full p-2 border rounded"
-          placeholder="Amount to swap"
-          onChange={(e) => {
-            const value = parseFloat(e.target.value);
-            if (value > token.balance) {
-              setError("Amount exceeds balance");
-            } else {
-              setError("");
-            }
-            setAmount(value);
-          }}
-        />
-        {error && <div className="text-red-500 mt-2">{error}</div>}
-      </div>
-      <div className="flex items-center mb-4">
-        {buyAmount && (
+      <div className="p-4 border rounded shadow-md bg-white mb-4">
+        <div className="mb-4">
+          <span className="font-bold">{token.symbol}</span>: {token.balance}
+        </div>
+        <div className="mb-4 flex items-center">
+          <input
+            type="number"
+            className="w-full p-2 border rounded mr-4"
+            placeholder="Amount to exchange"
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              if (value > token.balance) {
+                setError("Amount exceeds balance");
+              } else {
+                setError("");
+              }
+              setAmount(value);
+            }}
+          />
+          <Approve price={price} />
+        </div>
+        {error && <div className="text-red-500 my-2">{error}</div>}
+        <div className="flex items-center mb-4">
           <div className="mr-4">
-            <span className="font-bold">Buy Amount:</span> {buyAmount} USDC
+            <span className="font-bold">USDC to receive:</span> {buyAmount && <>{buyAmount}</>}
           </div>
-        )}
-        <Approve price={price} />
+        </div>
       </div>
+      {price && (
+        <div className="flex flex-row gap-x-2 mt-4">
+          Exchange route:
+          {price.sources.map((source, index) => (
+            <div key={index} className="mb-2">
+              <span className="font-bold">{source.displayName}</span>: {source.proportion * 100}%
+            </div>
+          ))}
+        </div>
+      )}
       {!quote ? (
         <button
           className="px-4 py-2 bg-blue-500 text-white rounded"
-          disabled={!price}
+          disabled={!price || isPendingQuote}
           onClick={() => getQuote()}
         >
-          Review
+          {isPendingQuote ? "Obtaining quote..." : "Review"}
         </button>) : (
         <button
           className="px-4 py-2 bg-green-500 text-white rounded"
@@ -108,13 +142,6 @@ const Exchange = () => {
         </button>
       )
       }
-      <div className="mt-4">
-        {price?.sources.map((source, index) => (
-          <div key={index} className="mb-2">
-            <span className="font-bold">{source.displayName}</span>: {source.proportion * 100}%
-          </div>
-        ))}
-      </div>
       {
         (error || exchangeError || priceError) && (
           <div className="mt-4 text-red-500">

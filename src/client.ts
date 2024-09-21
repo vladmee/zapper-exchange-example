@@ -1,10 +1,25 @@
 'use client';
 
-import { createWalletClient, createPublicClient, custom, http } from 'viem';
+import {
+  createWalletClient,
+  createPublicClient,
+  custom,
+  http,
+  createTestClient,
+  walletActions,
+  publicActions,
+  WalletClient,
+} from 'viem';
 import * as viemChains from 'viem/chains';
 import 'viem/window';
+import { useStore } from './store';
 
-export async function connectWalletClient(network: string) {
+// viem wallet clients are created here
+
+// wallet client; injected wallets only
+export async function connectWalletClient(
+  network: string
+): Promise<WalletClient> {
   let transport;
   if (window.ethereum) {
     transport = custom(window.ethereum);
@@ -17,6 +32,7 @@ export async function connectWalletClient(network: string) {
   const chainKey = network;
   let supportedChain;
 
+  // filter the supported chains based on the results from v2/exchange/supported
   for (const [key, chain] of Object.entries(viemChains)) {
     if (typeof chain !== 'object') continue;
     if (!('name' in chain)) continue;
@@ -30,14 +46,28 @@ export async function connectWalletClient(network: string) {
     throw new Error(`Chain with key ${chainKey} not found.`);
   }
 
+  // if anvil is enabled; a test client will be returned instead
+  const isLocalDev = useStore.getState().isLocalDev;
+  if (isLocalDev) {
+    const testClient = createTestClient({
+      chain: viemChains.foundry, // anvil; 31337 chain id
+      mode: 'anvil',
+      transport,
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+    return testClient as WalletClient;
+  }
+
   const walletClient = createWalletClient({
     chain: supportedChain,
-    transport: transport,
+    transport,
   });
 
-  return walletClient;
+  return walletClient as WalletClient;
 }
 
+// public client for reading blockchain data
 export function connectPublicClient(network: string) {
   const chainKey = network;
   let supportedChain;
@@ -55,9 +85,19 @@ export function connectPublicClient(network: string) {
     throw new Error(`Chain with key ${chainKey} not found.`);
   }
 
+  const isLocalDev = useStore.getState().isLocalDev;
+  if (isLocalDev) {
+    const testClient = createTestClient({
+      chain: viemChains.foundry, // anvil; 31337 chain id
+      mode: 'anvil',
+      transport: http(),
+    }).extend(publicActions);
+    return testClient;
+  }
+
   const publicClient = createPublicClient({
     chain: supportedChain,
-    transport: http(),
+    transport: http(), // public rpc
   });
 
   return publicClient;

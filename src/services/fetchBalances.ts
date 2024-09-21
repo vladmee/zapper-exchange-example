@@ -4,12 +4,14 @@ import { QueryFunctionContext } from '@tanstack/react-query';
 import { queryKeys } from './queries';
 import apiBaseUrl from './apiBaseUrl';
 import { useStore } from '@/store';
+import { isAddress } from 'viem';
 
 const apiKey = process.env.NEXT_PUBLIC_ZAPPER_API_KEY;
 const Authorization = `Basic ${Buffer.from(`${apiKey}:`, 'binary').toString(
   'base64'
 )}`;
 
+// fetch tokens and their balances
 export async function fetchBalances({
   queryKey: [{ endpoint, address }],
 }: QueryFunctionContext<ReturnType<(typeof queryKeys)['balances']>>): Promise<
@@ -23,6 +25,8 @@ export async function fetchBalances({
   if (!address) {
     throw new Error('Address not defined.');
   }
+
+  if (!isAddress(address)) throw new Error('Invalid address');
 
   if (!apiKey) {
     throw new Error('API key is required to fetch.');

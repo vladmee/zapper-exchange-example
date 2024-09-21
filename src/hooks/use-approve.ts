@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { PriceResponse, QuoteResponse } from '@/services/types';
+import { PriceResponse } from '@/services/types';
 import { waitForReceipt } from '@/services/wait-for-receipt';
 import { approve } from '@/services/approve';
 

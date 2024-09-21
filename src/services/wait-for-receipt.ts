@@ -2,6 +2,7 @@ import { connectPublicClient } from '@/client';
 import { useStore } from '@/store';
 import { Address } from 'viem';
 
+// utility function that waits for the transaction to be confirmed
 export async function waitForReceipt(hash: Address) {
   const network = useStore.getState().network;
   if (!network) {

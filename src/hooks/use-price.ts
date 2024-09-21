@@ -7,7 +7,7 @@ const usePrice = (request?: PriceRequest) => {
   return useQuery({
     queryKey: queryKeys.price(request),
     queryFn: fetchPrice,
-    enabled: !!request,
+    enabled: !!request && request.sellAmount > 0,
   });
 };
 
