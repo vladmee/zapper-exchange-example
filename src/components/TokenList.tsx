@@ -18,6 +18,8 @@ const TokenList = () => {
     setSelectedToken(undefined);
   }, [setSelectedToken, wallet]);
 
+  if (!wallet) return <div>No wallet provided</div>;
+
   if (token) return <Exchange />; // if a token from the list below is selected, display the exchange component instead
 
   if (isLoading) return <div>Loading...</div>;

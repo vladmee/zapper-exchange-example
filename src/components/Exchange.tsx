@@ -8,6 +8,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import useQuote from "@/hooks/use-quote";
 import useToken from "@/hooks/use-token";
 import Approve from "./Approve";
+import useUsdc from "@/hooks/use-usdc";
 
 export interface Source {
   name: string;
@@ -17,10 +18,6 @@ export interface Source {
   hops: unknown[];
 }
 
-// The buy token address is hardcoded to USDC for this example
-const buyTokenAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' // USDC address
-const decimals = 6;
-
 // Main exchange component. This is where the magic happens 🪄✨
 const Exchange = () => {
   const { wallet, token, network, setSelectedToken } = useStore(); // zustand store
@@ -29,10 +26,12 @@ const Exchange = () => {
   const [error, setError] = useState<string>("");
   const debouncedAmount = useDebounce(amount, 300);
 
+  const { address: usdcAddress, decimals: usdcDecimals } = useUsdc(network); // The buy token address is hardcoded to USDC for this example
+
   // usePrice calls /v2/exchange/price
   const { data: price, error: priceError } = usePrice({
     sellTokenAddress: token?.address,
-    buyTokenAddress,
+    buyTokenAddress: usdcAddress,
     sellAmount: debouncedAmount,
     slippagePercentage: 0.02,
     feeAsFraction: 0
@@ -54,7 +53,7 @@ const Exchange = () => {
 
   // useToken just formats the amount to display
   const { buyAmount } = useToken({
-    decimals,
+    decimals: usdcDecimals,
     amount: price?.buyAmount
   });
 
